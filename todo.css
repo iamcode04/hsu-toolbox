@@ -1,0 +1,193 @@
+@keyframes tb-todo-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+        filter: blur(3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes tb-todo-pulse {
+    50% {
+        opacity: 0.45;
+    }
+}
+
+.tb-todo {
+    display: inline-flex;
+    margin-left: 12px;
+    padding: 2px;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.04);
+    box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06);
+    vertical-align: top;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tb-todo:hover {
+    transform: scale(1.03);
+}
+
+.tb-todo-core {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 6px 16px -8px rgba(24, 24, 27, 0.18);
+    color: #3f3f46 !important;
+    font-family: var(--tb-font);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    word-break: keep-all;
+    animation: tb-todo-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--tb-todo-index, 0) * 80ms);
+}
+
+.tb-todo-is-loading .tb-todo-core {
+    color: #a1a1aa !important;
+    animation: tb-todo-pulse 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.tb-todo-part {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.tb-todo-part + .tb-todo-part {
+    padding-left: 10px;
+    border-left: 1px solid rgba(24, 24, 27, 0.08);
+}
+
+.tb-todo svg,
+#tb-todo-tip svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: inherit !important;
+}
+
+/* !important: the palette extension forces text colour inside course cards with !important */
+.tb-todo-assign {
+    color: #c2410c !important;
+}
+
+.tb-todo-video {
+    color: #1d4ed8 !important;
+}
+
+.tb-todo-clear {
+    color: #15803d !important;
+}
+
+/* dark backgrounds (tone.js) */
+.tb-todo.tb-on-dark {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.tb-on-dark .tb-todo-core {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+    color: #e4e4e7 !important;
+}
+
+.tb-on-dark.tb-todo-is-loading .tb-todo-core {
+    color: #a1a1aa !important;
+}
+
+.tb-on-dark .tb-todo-assign {
+    color: #fdba74 !important;
+}
+
+.tb-on-dark .tb-todo-video {
+    color: #93c5fd !important;
+}
+
+.tb-on-dark .tb-todo-clear {
+    color: #86efac !important;
+}
+
+.tb-on-dark .tb-todo-part + .tb-todo-part {
+    border-left-color: rgba(255, 255, 255, 0.12);
+}
+
+#tb-todo-tip {
+    position: fixed;
+    z-index: 2147483647;
+    padding: 4px;
+    border-radius: 18px;
+    background: rgba(24, 24, 27, 0.04);
+    box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06), 0 20px 60px -15px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    animation: tb-todo-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#tb-todo-tip .tb-todo-tip-core {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    color: #3f3f46;
+    font-family: var(--tb-font);
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    word-break: keep-all;
+}
+
+#tb-todo-tip .tb-todo-eyebrow {
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.05);
+    color: #71717a;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+#tb-todo-tip .tb-todo-tip-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#tb-todo-tip .tb-todo-tip-title {
+    max-width: 280px;
+    overflow: hidden;
+    color: #27272a;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#tb-todo-tip .tb-todo-tip-due {
+    margin-left: auto;
+    padding-left: 16px;
+    color: #a1a1aa;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tb-todo,
+    .tb-todo-core,
+    #tb-todo-tip {
+        transition: none;
+        animation: none;
+    }
+}

@@ -1,0 +1,88 @@
+/* !important on colours: the palette extension forces text colour inside the page with !important */
+#tb-watch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+    padding: 3px 4px 3px 3px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.04);
+    box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06);
+    color: #27272a !important;
+    font-family: var(--tb-font);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-watch-btn:hover {
+    transform: scale(1.02);
+}
+
+#tb-watch-btn:active {
+    transform: scale(0.98);
+}
+
+#tb-watch-btn .tb-watch-icon {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 6px 16px -8px rgba(24, 24, 27, 0.25);
+    color: #1d4ed8 !important;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-watch-btn:hover .tb-watch-icon {
+    transform: translateX(1px);
+}
+
+#tb-watch-btn svg {
+    width: 15px;
+    height: 15px;
+    color: inherit !important;
+}
+
+#tb-watch-btn .tb-watch-count {
+    min-width: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #1d4ed8;
+    color: #ffffff !important;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* dark backgrounds (tone.js) */
+#tb-watch-btn.tb-on-dark {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    color: #f4f4f5 !important;
+}
+
+#tb-watch-btn.tb-on-dark .tb-watch-icon {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    color: #93c5fd !important;
+}
+
+#tb-watch-btn.tb-on-dark .tb-watch-count {
+    background: #3b82f6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #tb-watch-btn,
+    #tb-watch-btn .tb-watch-icon {
+        transition: none;
+    }
+}

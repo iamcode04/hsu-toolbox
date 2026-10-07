@@ -1,0 +1,346 @@
+:root {
+    --ink: #18181b;
+    --ink-2: #3f3f46;
+    --muted: #a1a1aa;
+    --blue: #1d4ed8;
+    --orange: #c2410c;
+    --red: #b91c1c;
+    --green: #15803d;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+        filter: blur(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f7f7f8;
+    color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 18px 18px;
+}
+
+svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.eyebrow {
+    align-self: flex-start;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(29, 78, 216, 0.08);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 10px 0 16px;
+}
+
+.title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.cta {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 4px 4px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.5s var(--ease);
+}
+
+.cta .ic {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    transition: transform 0.5s var(--ease);
+}
+
+.cta:hover {
+    transform: scale(1.02);
+}
+
+.cta:hover .ic {
+    transform: translateX(2px);
+}
+
+.cta:active {
+    transform: scale(0.98);
+}
+
+.cta.is-stop {
+    background: #ffffff;
+    box-shadow: 0 0 0 1px rgba(194, 65, 12, 0.25);
+    color: var(--orange);
+}
+
+.cta.is-stop .ic {
+    background: rgba(194, 65, 12, 0.1);
+}
+
+.cta.is-stop svg {
+    width: 12px;
+    height: 12px;
+}
+
+.progress {
+    margin-bottom: 14px;
+}
+
+.progress .track {
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.08);
+}
+
+.progress .fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--blue);
+    transform-origin: left;
+    transition: transform 0.8s var(--ease);
+}
+
+.progress .meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    color: #71717a;
+    font-size: 11px;
+}
+
+/* double-bezel list: tray + cards */
+.shell {
+    padding: 4px;
+    border-radius: 20px;
+    background: rgba(24, 24, 27, 0.04);
+    box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06);
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 10px 11px 14px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 8px 20px -12px rgba(24, 24, 27, 0.22);
+    animation: rise 0.6s var(--ease) both;
+    animation-delay: calc(var(--i, 0) * 80ms);
+    transition: box-shadow 0.5s var(--ease);
+}
+
+.item + .item {
+    margin-top: 4px;
+}
+
+.item.is-now {
+    box-shadow: 0 0 0 2px var(--blue), 0 14px 30px -14px rgba(29, 78, 216, 0.5);
+}
+
+.txt {
+    flex: 1;
+    min-width: 0;
+}
+
+.course {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.name {
+    margin: 2px 0 3px;
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.is-done .name {
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+.due {
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.due.is-normal,
+.due.is-live {
+    color: var(--blue);
+}
+
+.due.is-warn {
+    color: var(--orange);
+}
+
+.due.is-urgent {
+    color: var(--red);
+}
+
+.due.is-done {
+    color: var(--green);
+}
+
+.due.is-wait {
+    color: var(--muted);
+}
+
+.due.is-live::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: 1px;
+    animation: pulse 1.6s var(--ease) infinite;
+}
+
+.play {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #f4f4f5;
+    color: var(--ink);
+    transition: transform 0.5s var(--ease), background 0.5s var(--ease);
+}
+
+.play svg {
+    width: 12px;
+    height: 12px;
+}
+
+button.play:hover {
+    background: var(--ink);
+    color: #ffffff;
+    transform: scale(1.06);
+}
+
+button.play:active {
+    transform: scale(0.96);
+}
+
+.play.is-done {
+    background: #f0fdf4;
+    color: var(--green);
+}
+
+.play.is-done svg {
+    width: 16px;
+    height: 16px;
+}
+
+.empty {
+    margin: 8px 0 0;
+    padding: 28px 12px;
+    border-radius: 20px;
+    background: rgba(24, 24, 27, 0.04);
+    color: #71717a;
+    font-size: 13px;
+    text-align: center;
+}
+
+.empty.is-clear {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--green);
+    font-weight: 600;
+}
+
+.empty.is-clear svg {
+    width: 28px;
+    height: 28px;
+}
+
+.foot {
+    margin: 14px 4px 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .item,
+    .due.is-live::before {
+        animation: none;
+    }
+
+    .cta,
+    .cta .ic,
+    .play,
+    .progress .fill {
+        transition: none;
+    }
+}

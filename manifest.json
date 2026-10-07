@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "HSU(한성대) 도구모음집",
+  "version": "1.0.0",
+  "description": "한성대 e-class에서 쓸 수 있는 도구 모음입니다. 상단바에 마크다운 메모장과 디데이를 추가하고, 강의 영상·과제의 남은 기간과 아직 보지 않은 영상을 알려 줍니다.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://learn.hansung.ac.kr/*"],
+      "exclude_matches": [
+        "https://learn.hansung.ac.kr/mod/*/viewer.php*",
+        "https://learn.hansung.ac.kr/login.php*",
+        "https://learn.hansung.ac.kr/login/*"
+      ],
+      "js": ["memo-editor.js", "memo.js", "dday.js", "tone.js", "deadline.js", "todo.js", "watch.js", "toolbox.js"],
+      "css": ["memo.css", "dday.css", "deadline.css", "todo.css", "watch.css", "toolbox.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://learn.hansung.ac.kr/mod/vod/viewer.php*"],
+      "js": ["watch-player.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://learn.hansung.ac.kr/mod/vod/viewer.php*"],
+      "js": ["watch-player-main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/menu-character.png", "watch.html"],
+      "matches": ["https://learn.hansung.ac.kr/*"]
+    }
+  ]
+}
