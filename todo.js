@@ -122,7 +122,8 @@ function startTodo() {
     .filter((a) => a.querySelector(".label-course")?.textContent.trim() !== "커뮤니티")
     .map((a) => ({ id: a.getAttribute("href").match(/id=(\d+)/)?.[1], title: a.querySelector("h3") }))
     .filter((course) => course.id && course.title)
-    .map((course) => ({ ...course, name: course.title.textContent.trim() }));
+    // first text node only: the title also holds a <span class="new">NEW</span> label on new courses
+    .map((course) => ({ ...course, name: course.title.firstChild?.textContent.trim() || course.title.textContent.trim() }));
   if (!courses.length) return;
 
   courses.forEach((course, index) => {

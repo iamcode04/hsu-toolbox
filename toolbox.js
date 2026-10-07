@@ -3,11 +3,13 @@ const TOOLBOX_FEATURES = [
   { key: "memo", label: "메모" },
   { key: "dday", label: "디데이" },
   { key: "deadline", label: "남은 기간" },
+  { key: "progress", label: "시청 진도" },
   { key: "todo", label: "할 일 개수" },
   { key: "watch", label: "미시청 영상" },
+  { key: "calendar", label: "마감 달력" },
 ];
 
-let toolboxSettings = { memo: true, dday: true, deadline: true, todo: true, watch: true };
+let toolboxSettings = { memo: true, dday: true, deadline: true, progress: true, todo: true, watch: true, calendar: true };
 
 function applyToolboxSettings() {
   for (const { key } of TOOLBOX_FEATURES) {

@@ -44,17 +44,30 @@ async function fetchDeadlineDoc(path) {
   return new DOMParser().parseFromString(await res.text(), "text/html");
 }
 
-async function getAttendedTitles(courseId) {
-  const doc = await fetchDeadlineDoc(`/report/ubcompletion/progress.php?id=${courseId}`);
-  const attended = new Set();
-  for (const row of doc.querySelectorAll("table.user_progress_table tbody tr")) {
-    const cells = [...row.cells];
-    const title = cells.findIndex((td) => td.classList.contains("text-left"));
-    if (title >= 0 && cells[title + 2]?.textContent.trim() === "O") {
-      attended.add(cells[title].textContent.trim());
+// "07:21" or "1:02:03" → seconds; 0 when there is no time in the text.
+function parseClock(text) {
+  const clock = text.match(/\d+(?::\d{2})+/)?.[0];
+  return clock ? clock.split(":").reduce((total, part) => total * 60 + Number(part), 0) : 0;
+}
+
+let vodProgressRequest = null;
+
+// The attendance report is read once per page and shared with progress.js.
+function getVodProgress(courseId) {
+  vodProgressRequest ??= fetchDeadlineDoc(`/report/ubcompletion/progress.php?id=${courseId}`).then((doc) => {
+    const progress = new Map();
+    for (const row of doc.querySelectorAll("table.user_progress_table tbody tr")) {
+      const cells = [...row.cells];
+      const title = cells.findIndex((td) => td.classList.contains("text-left"));
+      if (title < 0) continue;
+      progress.set(cells[title].textContent.trim(), {
+        seconds: parseClock(cells[title + 1]?.firstChild?.textContent || ""),
+        attended: cells[title + 2]?.textContent.trim() === "O",
+      });
     }
-  }
-  return attended;
+    return progress;
+  });
+  return vodProgressRequest;
 }
 
 async function getAssignments(courseId) {
@@ -81,8 +94,8 @@ async function addDeadlineBadges() {
   const courseId = new URLSearchParams(location.search).get("id");
   const vods = [...document.querySelectorAll("li.activity.modtype_vod")];
   const assigns = [...document.querySelectorAll("li.activity.modtype_assign")];
-  const [attended, assignments] = await Promise.all([
-    vods.length ? getAttendedTitles(courseId).catch(() => new Set()) : new Set(),
+  const [progress, assignments] = await Promise.all([
+    vods.length ? getVodProgress(courseId).catch(() => new Map()) : new Map(),
     assigns.length ? getAssignments(courseId).catch(() => new Map()) : new Map(),
   ]);
 
@@ -94,7 +107,7 @@ async function addDeadlineBadges() {
     const badge = createDeadlineBadge({
       start: parseDeadlineDate(period[1]),
       end: parseDeadlineDate(period[2]),
-      done: attended.has(title),
+      done: progress.get(title)?.attended || false,
       doneText: "출석 완료",
     });
     options.appendChild(badge);

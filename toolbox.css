@@ -3,9 +3,12 @@ html.tb-hide-memo #tb-memo,
 html.tb-hide-dday #tb-dday,
 html.tb-hide-dday #tb-dday-panel,
 html.tb-hide-deadline .tb-deadline,
+html.tb-hide-progress .tb-progress,
 html.tb-hide-todo .tb-todo,
 html.tb-hide-todo #tb-todo-tip,
-html.tb-hide-watch #tb-watch-btn {
+html.tb-hide-watch #tb-watch-btn,
+html.tb-hide-calendar #tb-cal-btn,
+html.tb-hide-calendar #tb-cal {
     display: none !important;
 }
 

@@ -1,19 +1,31 @@
 #tb-dday {
-    display: inline-block;
+    display: inline-flex;
+    gap: 8px;
     margin: -11px 0 -11px 14px;
     vertical-align: middle;
 }
 
-#tb-dday-btn {
+#tb-dday .tb-dday-item {
+    position: relative;
+    display: flex;
+}
+
+/* e-class styles every <button> with a white face and grey border (and :hover/:focus variants),
+   so these rules use the #tb-dday id to win, and the tint is painted by currentColor layers below. */
+#tb-dday .tb-dday-btn {
+    position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
     gap: 8px;
     height: 40px;
+    margin: 0;
     padding: 0 14px;
-    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border: 0;
     border-radius: 10px;
-    background: color-mix(in srgb, currentColor 10%, transparent);
-    color: #ffffff;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
     font-family: var(--tb-font);
     font-size: 24px;
     font-weight: 600;
@@ -21,40 +33,157 @@
     white-space: nowrap;
     cursor: pointer;
     opacity: 0.85;
-    transition: opacity 0.15s var(--tb-ease), background 0.15s var(--tb-ease), transform 0.15s var(--tb-ease);
+    transition: opacity 0.15s var(--tb-ease), transform 0.15s var(--tb-ease);
 }
 
-#tb-dday-btn:hover {
+#tb-dday .tb-dday-btn::before,
+#tb-dday .tb-dday-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+#tb-dday .tb-dday-btn::before {
+    background: currentColor;
+    opacity: 0.1;
+    transition: opacity 0.15s var(--tb-ease);
+}
+
+#tb-dday .tb-dday-btn::after {
+    border: 1px solid currentColor;
+    opacity: 0.3;
+}
+
+#tb-dday .tb-dday-btn:hover {
     opacity: 1;
-    background: color-mix(in srgb, currentColor 16%, transparent);
 }
 
-#tb-dday-btn:active {
+#tb-dday .tb-dday-btn:hover::before {
+    opacity: 0.16;
+}
+
+#tb-dday .tb-dday-btn:active {
     transform: scale(0.96);
 }
 
-#tb-dday-btn svg {
+#tb-dday .tb-dday-btn:focus {
+    outline: none;
+}
+
+#tb-dday .tb-dday-btn:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+#tb-dday .tb-dday-add:not(:only-child) {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+    font-weight: 400;
+    opacity: 0.5;
+}
+
+#tb-dday .tb-dday-add:not(:only-child):hover {
+    opacity: 1;
+}
+
+#tb-dday .tb-dday-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #18181b;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 4px 10px -2px rgba(24, 24, 27, 0.35);
+    color: #ffffff;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+    transition: opacity 0.2s var(--tb-ease), transform 0.35s var(--tb-ease), background 0.15s var(--tb-ease);
+}
+
+#tb-dday .tb-dday-item:hover .tb-dday-remove,
+#tb-dday .tb-dday-remove:focus-visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+#tb-dday .tb-dday-remove:hover {
+    background: #e5484d;
+}
+
+#tb-dday .tb-dday-remove:focus {
+    outline: none;
+}
+
+#tb-dday .tb-dday-remove svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* two or three D-days share the course title bar, so each one gets a little smaller */
+#tb-dday.tb-dday-many {
+    margin-top: -9px;
+    margin-bottom: -9px;
+}
+
+#tb-dday.tb-dday-many .tb-dday-btn {
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 20px;
+}
+
+#tb-dday.tb-dday-many .tb-dday-add:not(:only-child) {
+    width: 36px;
+    padding: 0;
+}
+
+#tb-dday.tb-dday-many .tb-dday-btn svg {
+    width: 19px;
+    height: 19px;
+}
+
+#tb-dday.tb-dday-many .tb-dday-btn span {
+    max-width: 8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#tb-dday .tb-dday-btn svg {
     flex: none;
     width: 22px;
     height: 22px;
 }
 
-#tb-dday-btn span,
-#tb-dday-btn i,
-#tb-dday-btn b {
+#tb-dday .tb-dday-btn span,
+#tb-dday .tb-dday-btn i,
+#tb-dday .tb-dday-btn b {
     font-family: inherit;
 }
 
-#tb-dday-btn span {
+#tb-dday .tb-dday-btn span {
     font-weight: 500;
 }
 
-#tb-dday-btn i {
+#tb-dday .tb-dday-btn i {
     font-style: normal;
     opacity: 0.45;
 }
 
-#tb-dday-btn b {
+#tb-dday .tb-dday-btn b {
     font-variant-numeric: tabular-nums;
 }
 
@@ -130,6 +259,10 @@
 #tb-dday-panel .tb-dday-swatch-more:focus-within {
     outline: 2px solid var(--tb-ink-3);
     outline-offset: 3px;
+}
+
+#tb-dday-panel .tb-dday-swatch-auto {
+    background: linear-gradient(135deg, #ffffff 50%, #18181b 50%);
 }
 
 #tb-dday-panel .tb-dday-swatch-more {

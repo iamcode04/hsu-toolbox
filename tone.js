@@ -1,5 +1,5 @@
 // Toolbox badges get the "tb-on-dark" class when what is behind them is dark (e.g. a palette dark theme),
-// so their CSS can switch to a light-on-dark look. Used by deadline.js, todo.js and watch.js.
+// so their CSS can switch to a light-on-dark look. Used by deadline.js, progress.js, todo.js, watch.js and calendar.js.
 const toneTargets = new Set();
 let toneTimer = null;
 

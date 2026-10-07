@@ -1,0 +1,92 @@
+/* !important on colours: the palette extension forces text colour inside the page with !important */
+@keyframes tb-progress-in {
+    from {
+        transform: translateX(-100%);
+    }
+}
+
+/* e-class makes every div inside .activityinstance inline-block, so this rule needs at least the same reach */
+.section .activity .activityinstance .tb-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 3px 0 5px 34px;
+}
+
+.tb-progress-track {
+    flex: 1;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.08);
+}
+
+.tb-progress-fill {
+    display: block;
+    width: calc(var(--tb-progress) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: #1d4ed8;
+    animation: tb-progress-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--tb-progress-index, 0) * 60ms);
+}
+
+.tb-progress-label {
+    min-width: 30px;
+    color: #71717a !important;
+    font-family: var(--tb-font);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.tb-progress-time {
+    color: #a1a1aa !important;
+    font-family: var(--tb-font);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.tb-progress-done .tb-progress-fill {
+    background: #15803d;
+}
+
+.tb-progress-done .tb-progress-label {
+    color: #15803d !important;
+}
+
+/* dark backgrounds (tone.js) */
+.tb-progress.tb-on-dark .tb-progress-track {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.tb-progress.tb-on-dark .tb-progress-fill {
+    background: #93c5fd;
+}
+
+.tb-progress.tb-on-dark .tb-progress-label {
+    color: #a1a1aa !important;
+}
+
+.tb-progress.tb-on-dark .tb-progress-time {
+    color: #71717a !important;
+}
+
+.tb-progress-done.tb-on-dark .tb-progress-fill {
+    background: #86efac;
+}
+
+.tb-progress-done.tb-on-dark .tb-progress-label {
+    color: #86efac !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tb-progress-fill {
+        animation: none;
+    }
+}
