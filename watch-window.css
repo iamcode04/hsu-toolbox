@@ -22,9 +22,9 @@
     }
 }
 
-@keyframes pulse {
-    50% {
-        opacity: 0.35;
+@keyframes fill-in {
+    from {
+        transform: translateX(-100%);
     }
 }
 
@@ -122,48 +122,6 @@ button {
     transform: scale(0.98);
 }
 
-.cta.is-stop {
-    background: #ffffff;
-    box-shadow: 0 0 0 1px rgba(194, 65, 12, 0.25);
-    color: var(--orange);
-}
-
-.cta.is-stop .ic {
-    background: rgba(194, 65, 12, 0.1);
-}
-
-.cta.is-stop svg {
-    width: 12px;
-    height: 12px;
-}
-
-.progress {
-    margin-bottom: 14px;
-}
-
-.progress .track {
-    height: 4px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: rgba(24, 24, 27, 0.08);
-}
-
-.progress .fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--blue);
-    transform-origin: left;
-    transition: transform 0.8s var(--ease);
-}
-
-.progress .meta {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 7px;
-    color: #71717a;
-    font-size: 11px;
-}
-
 /* double-bezel list: tray + cards */
 .shell {
     padding: 4px;
@@ -187,10 +145,6 @@ button {
 
 .item + .item {
     margin-top: 4px;
-}
-
-.item.is-now {
-    box-shadow: 0 0 0 2px var(--blue), 0 14px 30px -14px rgba(29, 78, 216, 0.5);
 }
 
 .txt {
@@ -217,19 +171,13 @@ button {
     white-space: nowrap;
 }
 
-.is-done .name {
-    color: var(--muted);
-    text-decoration: line-through;
-}
-
 .due {
     font-size: 11px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 
-.due.is-normal,
-.due.is-live {
+.due.is-normal {
     color: var(--blue);
 }
 
@@ -241,24 +189,46 @@ button {
     color: var(--red);
 }
 
-.due.is-done {
-    color: var(--green);
+/* how much of the video the report counts as studied; the fill slides in after its card rises */
+.watched {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 7px;
 }
 
-.due.is-wait {
+.watched .track {
+    flex: 1;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.07);
+}
+
+.watched .fill {
+    display: block;
+    width: calc(var(--p) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--blue);
+    animation: fill-in 0.9s var(--ease) both;
+    animation-delay: calc(200ms + var(--i, 0) * 80ms);
+}
+
+/* a fixed width keeps every card's track the same length */
+.watched .pct {
+    min-width: 32px;
+    color: var(--ink-2);
+    text-align: right;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.watched .time {
     color: var(--muted);
-}
-
-.due.is-live::before {
-    content: "";
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    margin-right: 5px;
-    border-radius: 50%;
-    background: currentColor;
-    vertical-align: 1px;
-    animation: pulse 1.6s var(--ease) infinite;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
 }
 
 .play {
@@ -288,16 +258,6 @@ button.play:hover {
 
 button.play:active {
     transform: scale(0.96);
-}
-
-.play.is-done {
-    background: #f0fdf4;
-    color: var(--green);
-}
-
-.play.is-done svg {
-    width: 16px;
-    height: 16px;
 }
 
 .empty {
@@ -333,14 +293,13 @@ button.play:active {
 
 @media (prefers-reduced-motion: reduce) {
     .item,
-    .due.is-live::before {
+    .watched .fill {
         animation: none;
     }
 
     .cta,
     .cta .ic,
-    .play,
-    .progress .fill {
+    .play {
         transition: none;
     }
 }

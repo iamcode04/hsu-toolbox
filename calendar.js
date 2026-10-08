@@ -3,12 +3,22 @@
 const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const CAL_CHIPS = 2;
 // [colour on light backgrounds, colour on dark backgrounds]:
-// red for what is still to do, green for a finished assignment on its due day, grey for the day it was handed in
+// red for an assignment still to do, blue for a video still to watch, green for a finished assignment or watched video
+// on its due day, grey for the day an assignment was handed in
 const CAL_TONES = {
   todo: ["#b91c1c", "#fca5a5"],
+  video: ["#1d4ed8", "#93c5fd"],
   done: ["#15803d", "#86efac"],
   handIn: ["#52525b", "#a1a1aa"],
 };
+// the kinds the switches next to the month show or hide; "video" covers watched videos too,
+// "submitted" both entries of a submitted assignment
+const CAL_FILTER_KEY = "calFilter";
+const CAL_FILTERS = [
+  { key: "assign", label: "남은 과제", tone: "todo" },
+  { key: "video", label: "영상", tone: "video" },
+  { key: "submitted", label: "제출 과제", tone: "done" },
+];
 
 // Solar icon set by 480 Design (CC BY 4.0)
 const CAL_ICONS = {
@@ -21,6 +31,9 @@ let calMonth = null;
 let calSelected = null;
 let calCache = null;
 let calOpenWhenSynced = false;
+let calFilter = { assign: true, video: true, submitted: true };
+// kinds just switched on: their chips and rows ease in on the redraw that follows
+let calFresh = [];
 
 function calKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -90,6 +103,7 @@ function getCalEvents() {
   for (const [courseId, todos] of Object.entries(calCache?.todos || {})) {
     if (!Array.isArray(todos)) continue;
     for (const todo of todos) {
+      if (!calFilter[calFilterKey(todo)]) continue;
       if (todo.end) add(calDueDay(todo.end), { ...todo, courseId, rank: todo.done ? 2 : 0, at: todo.end });
       if (todo.submitted) add(new Date(todo.submitted), { ...todo, courseId, handIn: true, rank: 1, at: todo.submitted });
     }
@@ -98,8 +112,12 @@ function getCalEvents() {
   return events;
 }
 
+function calFilterKey(event) {
+  return event.kind === "video" ? "video" : event.done ? "submitted" : "assign";
+}
+
 function calTone(event) {
-  return event.handIn ? "handIn" : event.done ? "done" : "todo";
+  return event.handIn ? "handIn" : event.done ? "done" : event.kind === "video" ? "video" : "todo";
 }
 
 function calIcon(event) {
@@ -201,9 +219,22 @@ function toggleCalendar() {
 }
 
 function onCalendarClick(e) {
+  const filter = e.target.closest("[data-filter]");
   const move = e.target.closest("[data-move]");
   const day = e.target.closest("[data-date]");
-  if (move) {
+  if (filter) {
+    // each switch flips its kind; "전체" turns every kind off when all are on, and every kind on otherwise
+    const keys = filter.dataset.filter === "all" ? CAL_FILTERS.map(({ key }) => key) : [filter.dataset.filter];
+    const on = !keys.every((key) => calFilter[key]);
+    calFresh = on ? keys.filter((key) => !calFilter[key]) : [];
+    for (const key of keys) calFilter[key] = on;
+    chrome.storage.local.set({ [CAL_FILTER_KEY]: calFilter });
+    // only the days are redrawn, so the switches stay in place and animate to their new state
+    paintCalFilter(e.currentTarget);
+    renderCalendarDays(e.currentTarget);
+    calFresh = [];
+    return;
+  } else if (move) {
     const step = Number(move.dataset.move);
     const now = new Date();
     calMonth = step ? new Date(calMonth.getFullYear(), calMonth.getMonth() + step, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
@@ -222,29 +253,35 @@ function createCalChip(event) {
   const chip = document.createElement("span");
   chip.className = `tb-cal-chip tb-cal-${event.kind}`;
   chip.classList.toggle("is-past", isCalPast(event));
+  chip.classList.toggle("is-fresh", calFresh.includes(calFilterKey(event)));
   chip.innerHTML = `${calIcon(event)}<span></span>`;
   chip.lastChild.textContent = event.title;
   paintCalTone(chip, calTone(event));
   return chip;
 }
 
+function paintCalFilter(panel) {
+  const all = CAL_FILTERS.every(({ key }) => calFilter[key]);
+  for (const button of panel.querySelectorAll("[data-filter]")) {
+    button.setAttribute("aria-checked", button.dataset.filter === "all" ? all : calFilter[button.dataset.filter]);
+  }
+}
+
 function renderCalendar() {
   const panel = document.getElementById("tb-cal");
   if (!panel) return;
-  const events = getCalEvents();
-  const names = getCalNames();
-  const today = calKey(new Date());
   const year = calMonth.getFullYear();
   const month = calMonth.getMonth();
-  const offset = calMonth.getDay();
-  const weeks = Math.ceil((offset + new Date(year, month + 1, 0).getDate()) / 7);
 
   panel.innerHTML = `
     <div class="tb-cal-core">
       <div class="tb-cal-head">
         <div>
           <span class="tb-cal-eyebrow">과제·영상 마감과 제출</span>
-          <div class="tb-cal-month">${year}년 ${month + 1}월</div>
+          <div class="tb-cal-title">
+            <div class="tb-cal-month">${year}년 ${month + 1}월</div>
+            <div class="tb-cal-filter" role="group" aria-label="보여 줄 일정"></div>
+          </div>
         </div>
         <div class="tb-cal-nav">
           <button type="button" data-move="-1" aria-label="이전 달">${CAL_ICONS.prev}</button>
@@ -253,12 +290,12 @@ function renderCalendar() {
         </div>
       </div>
       <div class="tb-cal-legend"></div>
-      <div class="tb-cal-grid">${CAL_WEEKDAYS.map((name) => `<span class="tb-cal-weekday">${name}</span>`).join("")}</div>
+      <div class="tb-cal-grid"></div>
       <div class="tb-cal-detail"></div>
     </div>`;
 
   const legend = panel.querySelector(".tb-cal-legend");
-  for (const [tone, label] of [["todo", "미제출·미시청"], ["done", "제출 완료"], ["handIn", "제출한 날"]]) {
+  for (const [tone, label] of [["todo", "남은 과제"], ["video", "미시청"], ["done", "제출·시청 완료"], ["handIn", "제출한 날"]]) {
     const item = document.createElement("span");
     item.className = "tb-cal-legend-item";
     item.textContent = label;
@@ -266,7 +303,35 @@ function renderCalendar() {
     legend.append(item);
   }
 
+  const filter = panel.querySelector(".tb-cal-filter");
+  for (const { key, label, tone } of [{ key: "all", label: "전체" }, ...CAL_FILTERS]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "tb-cal-filter-btn";
+    button.setAttribute("role", "switch");
+    button.dataset.filter = key;
+    button.textContent = label;
+    button.insertAdjacentHTML("beforeend", `<span class="tb-cal-switch"></span>`);
+    // the track takes its kind's colour; "전체" is coloured in calendar.css
+    if (tone) paintCalTone(button, tone);
+    filter.append(button);
+  }
+  paintCalFilter(panel);
+  renderCalendarDays(panel);
+}
+
+// The grid and the selected day's list: the parts a filter switch changes.
+function renderCalendarDays(panel) {
+  const events = getCalEvents();
+  const names = getCalNames();
+  const today = calKey(new Date());
+  const year = calMonth.getFullYear();
+  const month = calMonth.getMonth();
+  const offset = calMonth.getDay();
+  const weeks = Math.ceil((offset + new Date(year, month + 1, 0).getDate()) / 7);
+
   const grid = panel.querySelector(".tb-cal-grid");
+  grid.innerHTML = CAL_WEEKDAYS.map((name) => `<span class="tb-cal-weekday">${name}</span>`).join("");
   for (let i = 0; i < weeks * 7; i++) {
     const date = new Date(year, month, 1 - offset + i);
     const key = calKey(date);
@@ -293,7 +358,9 @@ function renderCalendar() {
     grid.append(day);
   }
 
-  renderCalendarDetail(panel.querySelector(".tb-cal-detail"), events.get(calSelected) || [], names);
+  const detail = panel.querySelector(".tb-cal-detail");
+  detail.replaceChildren();
+  renderCalendarDetail(detail, events.get(calSelected) || [], names);
 }
 
 // "10/8 24:00": a due date written the way the calendar files it
@@ -312,7 +379,12 @@ function renderCalendarDetail(detail, list, names) {
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "tb-cal-empty";
-    empty.textContent = calCache ? "이날은 마감이나 제출한 과제가 없어요." : "과제·영상 마감을 불러오는 중이에요…";
+    const filtered = CAL_FILTERS.some(({ key }) => !calFilter[key]);
+    empty.textContent = calCache
+      ? filtered
+        ? "켜 둔 종류에는 이날 일정이 없어요."
+        : "이날은 마감이나 제출한 과제가 없어요."
+      : "과제·영상 마감을 불러오는 중이에요…";
     detail.append(empty);
     return;
   }
@@ -323,6 +395,7 @@ function renderCalendarDetail(detail, list, names) {
     if (row.tagName === "A") row.href = `/mod/assign/view.php?id=${event.cmid}`;
     row.className = `tb-cal-row tb-cal-${event.kind}`;
     row.classList.toggle("is-past", isCalPast(event));
+    row.classList.toggle("is-fresh", calFresh.includes(calFilterKey(event)));
     row.innerHTML = `<span class="tb-cal-row-icon">${calIcon(event)}</span><span class="tb-cal-row-text"><span class="tb-cal-row-title"></span><span class="tb-cal-row-course"></span></span><span class="tb-cal-row-due"></span>`;
     row.querySelector(".tb-cal-row-title").textContent = event.title;
 
@@ -336,7 +409,7 @@ function renderCalendarDetail(detail, list, names) {
     if (event.handIn) {
       due.textContent = `${calClock(event.submitted)} 제출`;
     } else if (event.done) {
-      due.append(createDeadlineBadge({ done: true, doneText: "제출 완료" }), `${calTime(event.end)} 마감`);
+      due.append(createDeadlineBadge({ done: true, doneText: event.kind === "video" ? "시청 완료" : "제출 완료" }), `${calTime(event.end)} 마감`);
     } else if (isCalPast(event)) {
       due.textContent = "마감 지남";
     } else {
@@ -351,6 +424,10 @@ chrome.storage.onChanged.addListener((changes) => {
   if (!changes.todoCache || !document.getElementById("tb-cal")) return;
   calCache = readCalCache(changes.todoCache.newValue);
   renderCalendar();
+});
+
+chrome.storage.local.get(CAL_FILTER_KEY, (result) => {
+  calFilter = { ...calFilter, ...result[CAL_FILTER_KEY] };
 });
 
 document.addEventListener("DOMContentLoaded", createCalendarButton);

@@ -13,6 +13,14 @@
     }
 }
 
+/* no "to": a chip ends at its own opacity, so a past one settles back to faded */
+@keyframes tb-cal-fresh-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
 #tb-cal-btn {
     display: inline-flex;
     align-items: center;
@@ -242,6 +250,100 @@
     font-variant-numeric: tabular-nums;
 }
 
+#tb-cal .tb-cal-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+}
+
+/* filter switches: the 도구모음 menu's on/off switch, its track in the colour of the kind it shows */
+#tb-cal .tb-cal-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+}
+
+#tb-cal .tb-cal-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 8px 0 10px;
+    border-radius: 999px;
+    color: #a1a1aa !important;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal .tb-cal-filter-btn:hover {
+    background: rgba(24, 24, 27, 0.04);
+    color: #52525b !important;
+}
+
+#tb-cal .tb-cal-filter-btn:active {
+    transform: scale(0.98);
+}
+
+#tb-cal .tb-cal-filter-btn[aria-checked="true"] {
+    color: #27272a !important;
+}
+
+/* the other switches get --tb-cal-c from calendar.js */
+#tb-cal .tb-cal-filter-btn[data-filter="all"] {
+    --tb-cal-c: #18181b;
+}
+
+/* grey track; switching on fades the kind's colour in over it and slides the knob across */
+#tb-cal .tb-cal-switch {
+    position: relative;
+    flex: none;
+    width: 30px;
+    height: 18px;
+    border-radius: 9px;
+    background: #d4d4d8;
+}
+
+#tb-cal .tb-cal-switch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--tb-cal-c);
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal .tb-cal-switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(24, 24, 27, 0.25);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal .tb-cal-filter-btn[aria-checked="true"] .tb-cal-switch::before {
+    opacity: 1;
+}
+
+#tb-cal .tb-cal-filter-btn[aria-checked="true"] .tb-cal-switch::after {
+    transform: translateX(12px);
+}
+
+/* chips and rows of a kind just switched on */
+#tb-cal .is-fresh {
+    animation: tb-cal-fresh-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
 #tb-cal .tb-cal-nav {
     display: flex;
     align-items: center;
@@ -379,7 +481,7 @@
     color: #ffffff !important;
 }
 
-/* --tb-cal-c / --tb-cal-bg (and their -dark twins) are set by calendar.js: red to do, green done, grey hand-in day */
+/* --tb-cal-c / --tb-cal-bg (and their -dark twins) are set by calendar.js: red to do, blue video to watch, green done, grey hand-in day */
 #tb-cal .tb-cal-chip {
     display: flex;
     align-items: center;
@@ -623,6 +725,27 @@
 #tb-cal.tb-on-dark .tb-cal-eyebrow,
 #tb-cal.tb-on-dark .tb-cal-nav {
     background: rgba(255, 255, 255, 0.06);
+}
+
+#tb-cal.tb-on-dark .tb-cal-filter-btn {
+    color: #71717a !important;
+}
+
+#tb-cal.tb-on-dark .tb-cal-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #a1a1aa !important;
+}
+
+#tb-cal.tb-on-dark .tb-cal-filter-btn[aria-checked="true"] {
+    color: #f4f4f5 !important;
+}
+
+#tb-cal.tb-on-dark .tb-cal-filter-btn[data-filter="all"] {
+    --tb-cal-c: #71717a;
+}
+
+#tb-cal.tb-on-dark .tb-cal-switch {
+    background: rgba(255, 255, 255, 0.16);
 }
 
 #tb-cal.tb-on-dark .tb-cal-eyebrow,

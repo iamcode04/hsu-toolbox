@@ -6,7 +6,7 @@ function countWatchable(cache) {
   const now = Date.now();
   return Object.values(cache?.todos || {})
     .flat()
-    .filter((t) => t.kind === "video" && t.cmid && t.start <= now && now <= t.end).length;
+    .filter((t) => t.kind === "video" && !t.done && t.cmid && t.start <= now && now <= t.end).length;
 }
 
 function createWatchButton() {

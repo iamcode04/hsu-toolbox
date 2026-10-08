@@ -1,7 +1,10 @@
-// Uses fetchDeadlineDoc, parseDeadlineDate, getAssignments and createDeadlineBadge from deadline.js (loaded before this file).
+// Uses fetchDeadlineDoc, parseDeadlineDate, parseClock, DEADLINE_PERIOD, getAssignments and createDeadlineBadge from deadline.js
+// (loaded before this file).
 const TODO_CACHE_KEY = "todoCache";
 // bumped when the cached entries change shape; 2: assignment ids, and submitted assignments with their submission time
-const TODO_CACHE_VERSION = 2;
+// 3: videos never opened, which earlier caches left out; 4: watched videos (done: true)
+// 5: study time and length of videos still to watch (seconds, length)
+const TODO_CACHE_VERSION = 5;
 const TODO_CACHE_MS = 30 * 60 * 1000;
 const TODO_ASSIGN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -24,6 +27,7 @@ function reportTodoSync(state) {
   for (const listener of todoSyncListeners) listener(state);
 }
 
+// Watched videos stay in the list (done: true) so the calendar can show them.
 async function getVideoTodos(courseId) {
   const doc = await fetchDeadlineDoc(`/report/ubcompletion/progress.php?id=${courseId}`);
   const videos = [];
@@ -31,14 +35,52 @@ async function getVideoTodos(courseId) {
     const button = row.querySelector("button.track_detail");
     const cells = [...row.cells];
     const title = cells.findIndex((td) => td.classList.contains("text-left"));
-    if (!button || title < 0 || cells[title + 2]?.textContent.trim() === "O") continue;
-    videos.push({ kind: "video", title: cells[title].textContent.trim(), start: button.dataset.sterm * 1000, end: button.dataset.eterm * 1000 });
+    if (title < 0) continue;
+    // the period is on the "N회 열람" button, which a video never opened doesn't have ("-"); those get it from the course page below
+    videos.push({
+      kind: "video",
+      title: cells[title].textContent.trim(),
+      start: button ? button.dataset.sterm * 1000 : null,
+      end: button ? button.dataset.eterm * 1000 : null,
+      done: cells[title + 2]?.textContent.trim() === "O",
+      // the report's study time so far, as progress.js reads it (0 for "-")
+      seconds: parseClock(cells[title + 1]?.firstChild?.textContent || ""),
+    });
   }
-  if (videos.length) {
+  // the course page has the period of videos never opened, and the length the 미시청 영상 progress bars need
+  if (videos.some((video) => !video.end || !video.done)) {
+    const details = await getVodDetails(courseId).catch(() => new Map());
+    for (const video of videos) {
+      const detail = details.get(video.title);
+      if (!detail) continue;
+      if (!video.end) Object.assign(video, { start: detail.start, end: detail.end });
+      if (!video.done) video.length = detail.length;
+    }
+  }
+  const dated = videos.filter((video) => video.end);
+  // only videos still to watch need an id (to open the player)
+  if (dated.some((video) => !video.done)) {
     const ids = await getVodIds(courseId).catch(() => new Map());
-    for (const video of videos) video.cmid = ids.get(video.title) ?? null;
+    for (const video of dated) video.cmid = ids.get(video.title) ?? null;
   }
-  return videos;
+  return dated;
+}
+
+// Video periods and lengths by title from the course page (the same text deadline.js and progress.js read there).
+async function getVodDetails(courseId) {
+  const doc = await fetchDeadlineDoc(`/course/view.php?id=${courseId}`);
+  const details = new Map();
+  for (const li of doc.querySelectorAll("li.activity.modtype_vod")) {
+    const title = li.querySelector(".instancename")?.firstChild?.textContent.trim();
+    if (!title) continue;
+    const period = li.querySelector(".displayoptions .text-ubstrap")?.textContent.match(DEADLINE_PERIOD);
+    details.set(title, {
+      start: period ? parseDeadlineDate(period[1]).getTime() : null,
+      end: period ? parseDeadlineDate(period[2]).getTime() : null,
+      length: parseClock(li.querySelector(".displayoptions .text-info")?.textContent || ""),
+    });
+  }
+  return details;
 }
 
 // The attendance page has no player id, so map titles to ids from the course's video list (used by watch.js to open the player).
@@ -147,7 +189,7 @@ function closeTodoTipSoon() {
 function renderCourseTodos(badge, todos) {
   const now = Date.now();
   const assigns = todos.filter((t) => t.kind === "assign" && !t.done && t.end > now && t.end - now <= TODO_ASSIGN_WINDOW_MS);
-  const videos = todos.filter((t) => t.kind === "video" && t.start <= now && now <= t.end);
+  const videos = todos.filter((t) => t.kind === "video" && !t.done && t.start <= now && now <= t.end);
 
   const core = document.createElement("span");
   core.className = "tb-todo-core";
