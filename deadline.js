@@ -11,7 +11,7 @@ function formatDeadlineSpan(ms) {
   if (minutes < 60) return `${Math.max(minutes, 1)}분`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}시간`;
-  return `${Math.floor(hours / 24)}일`;
+  return `${Math.floor(hours / 24)}일 ${hours % 24}시간`;
 }
 
 function createDeadlineBadge({ start, end, done, doneText }) {
@@ -80,10 +80,11 @@ async function getAssignments(courseId) {
     const link = row.querySelector('a[href*="/mod/assign/view.php"]');
     const id = link?.getAttribute("href").match(/id=(\d+)/)?.[1];
     const due = row.cells[dueCol]?.textContent.trim() || "";
-    if (!id || !/^\d{4}-\d{2}-\d{2} /.test(due)) continue;
+    if (!id) continue;
+    // some assignments have no deadline ("-"); their end is null
     assignments.set(id, {
       title: link.textContent.trim(),
-      end: parseDeadlineDate(due),
+      end: /^\d{4}-\d{2}-\d{2} /.test(due) ? parseDeadlineDate(due) : null,
       done: row.cells[statusCol]?.textContent.includes("제출 완료") || false,
     });
   }
@@ -117,7 +118,7 @@ async function addDeadlineBadges() {
   for (const li of assigns) {
     const assignment = assignments.get(li.id.replace("module-", ""));
     const link = li.querySelector(".activityinstance > a");
-    if (!assignment || !link) continue;
+    if (!assignment?.end || !link) continue;
     const badge = createDeadlineBadge({ ...assignment, doneText: "제출 완료" });
     link.after(badge);
     trackTone(badge);

@@ -81,6 +81,91 @@
     color: #ffffff !important;
 }
 
+/* waiting for the sync: a click still counts, the calendar opens when it is done */
+#tb-cal-btn.is-syncing {
+    opacity: 0.55;
+    cursor: progress;
+}
+
+#tb-cal-sync {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+    padding: 3px 14px 3px 3px;
+    border-radius: 999px;
+    background: rgba(24, 24, 27, 0.04);
+    box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06);
+    color: #27272a !important;
+    font-family: var(--tb-font);
+    font-size: 13px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    vertical-align: middle;
+    /* not "both": a held end state would override .is-leaving's opacity */
+    animation: tb-cal-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal-sync.is-leaving {
+    opacity: 0;
+}
+
+#tb-cal-sync .tb-cal-sync-ring {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 6px 16px -8px rgba(24, 24, 27, 0.25);
+}
+
+/* drawn from 12 o'clock; pathLength="100" lets the fill's dash length be the percentage */
+#tb-cal-sync svg {
+    width: 20px;
+    height: 20px;
+    transform: rotate(-90deg);
+}
+
+#tb-cal-sync circle {
+    fill: none;
+    stroke-width: 4;
+}
+
+#tb-cal-sync .tb-cal-sync-track {
+    stroke: rgba(24, 24, 27, 0.1);
+}
+
+#tb-cal-sync .tb-cal-sync-fill {
+    stroke: #18181b;
+    stroke-linecap: round;
+    stroke-dasharray: 0 100;
+    transition: stroke-dasharray 0.5s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal-sync b {
+    color: inherit !important;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+#tb-cal-sync .tb-cal-sync-note {
+    color: #71717a !important;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+#tb-cal-sync.is-done .tb-cal-sync-fill {
+    stroke: #15803d;
+}
+
+#tb-cal-sync.is-done b {
+    color: #15803d !important;
+}
+
 #tb-cal {
     margin: 14px 0 22px;
     padding: 5px;
@@ -294,7 +379,7 @@
     color: #ffffff !important;
 }
 
-/* --tb-cal-c / --tb-cal-bg (and their -dark twins) are set per course by calendar.js */
+/* --tb-cal-c / --tb-cal-bg (and their -dark twins) are set by calendar.js: red to do, green done, grey hand-in day */
 #tb-cal .tb-cal-chip {
     display: flex;
     align-items: center;
@@ -354,14 +439,47 @@
 }
 
 #tb-cal .tb-cal-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 0;
+    margin: 0 -8px;
+    padding: 8px;
+    border-radius: 12px;
 }
 
-#tb-cal .tb-cal-row + .tb-cal-row {
-    box-shadow: inset 0 1px 0 rgba(24, 24, 27, 0.05);
+/* the divider keeps to the text width while a hovered row fills out to its rounded edge */
+#tb-cal .tb-cal-row + .tb-cal-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 8px;
+    left: 8px;
+    height: 1px;
+    background: rgba(24, 24, 27, 0.05);
+}
+
+#tb-cal a.tb-cal-row {
+    text-decoration: none;
+    transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-cal a.tb-cal-row:hover {
+    background: rgba(24, 24, 27, 0.04);
+}
+
+#tb-cal a.tb-cal-row:hover::before,
+#tb-cal a.tb-cal-row:hover + .tb-cal-row::before {
+    opacity: 0;
+}
+
+#tb-cal a.tb-cal-row:focus {
+    outline: none;
+}
+
+#tb-cal a.tb-cal-row:focus-visible {
+    outline: 2px solid #18181b;
+    outline-offset: -2px;
 }
 
 #tb-cal .tb-cal-row-icon {
@@ -408,6 +526,9 @@
 }
 
 #tb-cal .tb-cal-row-due {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex: none;
     margin-left: auto;
     padding-left: 12px;
@@ -415,6 +536,10 @@
     font-size: 12px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+}
+
+#tb-cal .tb-cal-row-due .tb-deadline {
+    margin-left: 0;
 }
 
 #tb-cal .tb-cal-row.is-past {
@@ -442,6 +567,37 @@
 #tb-cal-btn.tb-on-dark[aria-expanded="true"] .tb-cal-btn-icon {
     background: rgba(24, 24, 27, 0.08);
     color: #18181b !important;
+}
+
+#tb-cal-sync.tb-on-dark {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    color: #f4f4f5 !important;
+}
+
+#tb-cal-sync.tb-on-dark .tb-cal-sync-ring {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+#tb-cal-sync.tb-on-dark .tb-cal-sync-track {
+    stroke: rgba(255, 255, 255, 0.18);
+}
+
+#tb-cal-sync.tb-on-dark .tb-cal-sync-fill {
+    stroke: #f4f4f5;
+}
+
+#tb-cal-sync.tb-on-dark .tb-cal-sync-note {
+    color: #a1a1aa !important;
+}
+
+#tb-cal-sync.tb-on-dark.is-done .tb-cal-sync-fill {
+    stroke: #86efac;
+}
+
+#tb-cal-sync.tb-on-dark.is-done b {
+    color: #86efac !important;
 }
 
 #tb-cal.tb-on-dark {
@@ -511,12 +667,20 @@
     background: var(--tb-cal-c-dark);
 }
 
-#tb-cal.tb-on-dark .tb-cal-detail,
-#tb-cal.tb-on-dark .tb-cal-row + .tb-cal-row {
+#tb-cal.tb-on-dark .tb-cal-detail {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+#tb-cal.tb-on-dark .tb-cal-row + .tb-cal-row::before {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#tb-cal.tb-on-dark a.tb-cal-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 #tb-cal.tb-on-dark button:focus-visible,
+#tb-cal.tb-on-dark a.tb-cal-row:focus-visible,
 #tb-cal-btn.tb-on-dark:focus-visible {
     outline-color: #f4f4f5;
 }
@@ -524,6 +688,8 @@
 @media (prefers-reduced-motion: reduce) {
     #tb-cal,
     #tb-cal-btn,
+    #tb-cal-sync,
+    #tb-cal-sync *,
     #tb-cal * {
         transition: none;
         animation: none;

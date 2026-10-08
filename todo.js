@@ -1,5 +1,7 @@
-// Uses fetchDeadlineDoc and getAssignments from deadline.js (loaded before this file).
+// Uses fetchDeadlineDoc, parseDeadlineDate, getAssignments and createDeadlineBadge from deadline.js (loaded before this file).
 const TODO_CACHE_KEY = "todoCache";
+// bumped when the cached entries change shape; 2: assignment ids, and submitted assignments with their submission time
+const TODO_CACHE_VERSION = 2;
 const TODO_CACHE_MS = 30 * 60 * 1000;
 const TODO_ASSIGN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -11,6 +13,16 @@ const TODO_ICONS = {
 };
 
 let todoStarted = false;
+let todoTipTimer = null;
+// Sync progress for calendar.js: null until a sync reports, then { done, total, finished } counted in courses to read
+// (done is fractional while a course is being read).
+let todoSync = null;
+const todoSyncListeners = new Set();
+
+function reportTodoSync(state) {
+  todoSync = state;
+  for (const listener of todoSyncListeners) listener(state);
+}
 
 async function getVideoTodos(courseId) {
   const doc = await fetchDeadlineDoc(`/report/ubcompletion/progress.php?id=${courseId}`);
@@ -40,10 +52,40 @@ async function getVodIds(courseId) {
   return ids;
 }
 
-async function getCourseTodos(courseId) {
+// The assignment list only says "제출 완료"; the time is the "최종 수정 일시" row on the assignment's own page.
+async function getSubmittedTime(cmid) {
+  const doc = await fetchDeadlineDoc(`/mod/assign/view.php?id=${cmid}`);
+  for (const row of doc.querySelectorAll("table.generaltable tr")) {
+    if (row.cells[0]?.textContent.trim() !== "최종 수정 일시") continue;
+    const text = row.cells[1]?.textContent.trim() || "";
+    return /^\d{4}-\d{2}-\d{2} /.test(text) ? parseDeadlineDate(text).getTime() : null;
+  }
+  return null;
+}
+
+// Submitted assignments stay in the list (done: true) so the calendar can show them.
+// "submittedTimes" holds times read before: a submission can be replaced until the deadline, so only those past it are reused.
+// onProgress gets how much of this course is read (0–1): videos a quarter, the assignment list a quarter, submission times the rest.
+async function getCourseTodos(courseId, submittedTimes, onProgress = () => {}) {
   const todos = await getVideoTodos(courseId).catch(() => []);
-  for (const assignment of (await getAssignments(courseId).catch(() => new Map())).values()) {
-    if (!assignment.done) todos.push({ kind: "assign", title: assignment.title, end: assignment.end.getTime() });
+  onProgress(0.25);
+  const assignments = await getAssignments(courseId).catch(() => new Map());
+  onProgress(0.5);
+  const reusable = (cmid, end) => submittedTimes.has(cmid) && end && end < Date.now();
+  const reads = [...assignments].filter(([cmid, a]) => a.done && !reusable(cmid, a.end?.getTime())).length;
+  let read = 0;
+  for (const [cmid, assignment] of assignments) {
+    const end = assignment.end?.getTime() ?? null;
+    if (!assignment.done) {
+      if (end) todos.push({ kind: "assign", title: assignment.title, end, cmid });
+      continue;
+    }
+    let submitted = submittedTimes.get(cmid);
+    if (!reusable(cmid, end)) {
+      submitted = await getSubmittedTime(cmid).catch(() => submitted ?? null);
+      onProgress(0.5 + (0.5 * ++read) / reads);
+    }
+    todos.push({ kind: "assign", title: assignment.title, end, cmid, done: true, submitted });
   }
   return todos;
 }
@@ -68,7 +110,9 @@ function openTodoTip(badge, items) {
   tip.id = "tb-todo-tip";
   tip.innerHTML = `<div class="tb-todo-tip-core"><span class="tb-todo-eyebrow">7일 안에 할 일</span></div>`;
   for (const item of items) {
-    const row = document.createElement("div");
+    // assignments link to their own page
+    const row = document.createElement(item.kind === "assign" && item.cmid ? "a" : "div");
+    if (row.tagName === "A") row.href = `/mod/assign/view.php?id=${item.cmid}`;
     row.className = "tb-todo-tip-row";
     row.innerHTML = TODO_ICONS[item.kind];
     const title = document.createElement("span");
@@ -76,11 +120,14 @@ function openTodoTip(badge, items) {
     title.textContent = item.title;
     const due = document.createElement("span");
     due.className = "tb-todo-tip-due";
-    due.textContent = `${formatTodoDate(item.end)} 마감`;
+    due.append(createDeadlineBadge({ start: item.start, end: item.end }), `${formatTodoDate(item.end)} 마감`);
     row.classList.add(`tb-todo-${item.kind}`);
     row.append(title, due);
     tip.firstElementChild.appendChild(row);
   }
+  // the tip sits 8px below the badge, so give the pointer a moment to cross the gap
+  tip.addEventListener("mouseenter", () => clearTimeout(todoTipTimer));
+  tip.addEventListener("mouseleave", closeTodoTipSoon);
   const rect = badge.getBoundingClientRect();
   tip.style.top = `${rect.bottom + 8}px`;
   tip.style.left = `${rect.left}px`;
@@ -88,12 +135,18 @@ function openTodoTip(badge, items) {
 }
 
 function closeTodoTip() {
+  clearTimeout(todoTipTimer);
   document.getElementById("tb-todo-tip")?.remove();
+}
+
+function closeTodoTipSoon() {
+  clearTimeout(todoTipTimer);
+  todoTipTimer = setTimeout(closeTodoTip, 200);
 }
 
 function renderCourseTodos(badge, todos) {
   const now = Date.now();
-  const assigns = todos.filter((t) => t.kind === "assign" && t.end > now && t.end - now <= TODO_ASSIGN_WINDOW_MS);
+  const assigns = todos.filter((t) => t.kind === "assign" && !t.done && t.end > now && t.end - now <= TODO_ASSIGN_WINDOW_MS);
   const videos = todos.filter((t) => t.kind === "video" && t.start <= now && now <= t.end);
 
   const core = document.createElement("span");
@@ -112,7 +165,7 @@ function renderCourseTodos(badge, todos) {
 
   const items = [...assigns, ...videos].sort((a, b) => a.end - b.end);
   badge.addEventListener("mouseenter", () => openTodoTip(badge, items));
-  badge.addEventListener("mouseleave", closeTodoTip);
+  badge.addEventListener("mouseleave", closeTodoTipSoon);
 }
 
 function startTodo() {
@@ -124,7 +177,10 @@ function startTodo() {
     .filter((course) => course.id && course.title)
     // first text node only: the title also holds a <span class="new">NEW</span> label on new courses
     .map((course) => ({ ...course, name: course.title.firstChild?.textContent.trim() || course.title.textContent.trim() }));
-  if (!courses.length) return;
+  if (!courses.length) {
+    reportTodoSync({ done: 0, total: 0, finished: true });
+    return;
+  }
 
   courses.forEach((course, index) => {
     course.badge = document.createElement("span");
@@ -139,19 +195,30 @@ function startTodo() {
   // One course at a time: e-class handles a user's requests one by one, so this keeps the user's own clicks from queuing behind ours.
   chrome.storage.local.get(TODO_CACHE_KEY, async (result) => {
     const cache = result[TODO_CACHE_KEY];
-    const fresh = Boolean(cache) && cache.user === user && Date.now() - cache.time < TODO_CACHE_MS;
-    const todos = fresh && !Array.isArray(cache.todos) ? cache.todos : {};
+    const mine = Boolean(cache) && cache.user === user && !Array.isArray(cache.todos);
+    const fresh = mine && cache.version === TODO_CACHE_VERSION && Date.now() - cache.time < TODO_CACHE_MS;
+    const todos = fresh ? cache.todos : {};
+    const submittedTimes = new Map(
+      mine ? Object.values(cache.todos).flat().filter((t) => t.submitted).map((t) => [t.cmid, t.submitted]) : []
+    );
     const names = Object.fromEntries(courses.map((course) => [course.id, course.name]));
-    let fetched = false;
+    const total = courses.filter((course) => !todos[course.id]).length;
+    let done = 0;
+    if (total) reportTodoSync({ done, total, finished: false });
     for (const course of courses) {
-      // entries cached before video ids were stored lack "cmid"; refetch those
-      if (!todos[course.id] || todos[course.id].some((t) => t.kind === "video" && !("cmid" in t))) {
-        todos[course.id] = await getCourseTodos(course.id);
-        fetched = true;
+      if (!todos[course.id]) {
+        todos[course.id] = await getCourseTodos(course.id, submittedTimes, (part) => reportTodoSync({ done: done + part, total, finished: false }));
+        reportTodoSync({ done: ++done, total, finished: false });
       }
       renderCourseTodos(course.badge, todos[course.id]);
     }
-    if (fetched) chrome.storage.local.set({ [TODO_CACHE_KEY]: { user, time: fresh ? cache.time : Date.now(), todos, names } });
+    // finished only once the cache is written, so the calendar opens on the new data
+    const finish = () => reportTodoSync({ done, total, finished: true });
+    if (total) {
+      chrome.storage.local.set({ [TODO_CACHE_KEY]: { version: TODO_CACHE_VERSION, user, time: fresh ? cache.time : Date.now(), todos, names } }, finish);
+    } else {
+      finish();
+    }
   });
 }
 
@@ -167,3 +234,5 @@ chrome.storage.local.get("toolbox", (result) => {
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.toolbox?.newValue?.todo || changes.toolbox?.newValue?.watch) startTodo();
 });
+// the tip is placed once under its badge, so it would be left behind when the page scrolls
+window.addEventListener("scroll", closeTodoTip, { passive: true });

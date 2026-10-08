@@ -34,28 +34,33 @@
     color: #1e7e34 !important;
 }
 
-/* dark backgrounds (tone.js) */
-.tb-deadline.tb-on-dark {
+/* dark backgrounds (tone.js); inside the calendar it is the panel that gets the class */
+.tb-deadline.tb-on-dark,
+#tb-cal.tb-on-dark .tb-deadline {
     background: rgba(96, 165, 250, 0.16);
     color: #93c5fd !important;
 }
 
-.tb-deadline-warn.tb-on-dark {
+.tb-deadline-warn.tb-on-dark,
+#tb-cal.tb-on-dark .tb-deadline-warn {
     background: rgba(251, 146, 60, 0.16);
     color: #fdba74 !important;
 }
 
-.tb-deadline-urgent.tb-on-dark {
+.tb-deadline-urgent.tb-on-dark,
+#tb-cal.tb-on-dark .tb-deadline-urgent {
     background: rgba(248, 113, 113, 0.18);
     color: #fca5a5 !important;
 }
 
-.tb-deadline-muted.tb-on-dark {
+.tb-deadline-muted.tb-on-dark,
+#tb-cal.tb-on-dark .tb-deadline-muted {
     background: rgba(255, 255, 255, 0.1);
     color: #d4d4d8 !important;
 }
 
-.tb-deadline-done.tb-on-dark {
+.tb-deadline-done.tb-on-dark,
+#tb-cal.tb-on-dark .tb-deadline-done {
     background: rgba(74, 222, 128, 0.14);
     color: #86efac !important;
 }

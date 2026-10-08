@@ -129,14 +129,13 @@
     border-radius: 18px;
     background: rgba(24, 24, 27, 0.04);
     box-shadow: 0 0 0 1px rgba(24, 24, 27, 0.06), 0 20px 60px -15px rgba(0, 0, 0, 0.18);
-    pointer-events: none;
     animation: tb-todo-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 #tb-todo-tip .tb-todo-tip-core {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     padding: 12px 14px;
     border-radius: 14px;
     background: #ffffff;
@@ -151,6 +150,7 @@
 
 #tb-todo-tip .tb-todo-eyebrow {
     align-self: flex-start;
+    margin-bottom: 4px;
     padding: 2px 8px;
     border-radius: 999px;
     background: rgba(24, 24, 27, 0.05);
@@ -164,6 +164,27 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin: 0 -8px;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+#tb-todo-tip a.tb-todo-tip-row {
+    text-decoration: none;
+    transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#tb-todo-tip a.tb-todo-tip-row:hover {
+    background: rgba(24, 24, 27, 0.05);
+}
+
+#tb-todo-tip a.tb-todo-tip-row:focus {
+    outline: none;
+}
+
+#tb-todo-tip a.tb-todo-tip-row:focus-visible {
+    outline: 2px solid #18181b;
+    outline-offset: -2px;
 }
 
 #tb-todo-tip .tb-todo-tip-title {
@@ -176,11 +197,18 @@
 }
 
 #tb-todo-tip .tb-todo-tip-due {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     margin-left: auto;
     padding-left: 16px;
     color: #a1a1aa;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+}
+
+#tb-todo-tip .tb-deadline {
+    margin-left: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
